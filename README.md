@@ -1,123 +1,109 @@
-# Self-Pruning Neural Network
+# Self-Pruning Neural Network (MLP)
 
-This project is a small PyTorch implementation of a self-pruning MLP for CIFAR-10.
-Instead of pruning after training, each weight has a learnable gate that is trained together with the model.
-The idea is simple: important connections stay active, and weak ones get pushed down over time.
-
----
+This project is a PyTorch implementation of a self-pruning MLP on CIFAR-10.
+Instead of pruning after training, each weight has a learnable gate trained jointly with the model.
 
 ## Project Idea
 
-Each dense layer uses a custom gated linear layer instead of `nn.Linear`.
-During the forward pass, the gate scores go through a sigmoid and scale the weights:
+Each dense layer is a custom gated linear layer:
 
 ```text
-weight_final = weight * sigmoid(gate_score)
+effective_weight = weight * sigmoid(gate_score)
 ```
 
-If a gate moves close to 1, the connection remains active.
-If it moves close to 0, the connection becomes negligible and is effectively pruned.
-
----
+Connections with small gate values become negligible and are effectively pruned during training.
 
 ## Model Setup
 
-* Dataset: CIFAR-10
-* Architecture: 3-layer MLP
-* Activation: ReLU
-* Layer type: custom gated linear layer
-
----
+- Dataset: CIFAR-10
+- Architecture: 3-layer MLP
+- Activation: ReLU
+- Layer type: custom gated linear layer
 
 ## Loss Function
 
-The total loss is:
-
 ```text
-Total Loss = CrossEntropy Loss + λ * Sparsity Loss
+Total Loss = CrossEntropy Loss + lambda_reg * Sparsity Loss
 ```
 
-Where:
+- `CrossEntropy Loss`: classification objective
+- `Sparsity Loss`: sum of gate activations (L1-style pressure toward sparse connectivity)
 
-* CrossEntropy Loss handles classification
-* Sparsity Loss is the sum of gate values (L1-style penalty)
+Sparsity in this project is measured as the percentage of effective weights with magnitude less than `1e-3`.
 
-This encourages the model to both learn the task and reduce unnecessary connections.
+## Effect of Lambda on Sparsity and Accuracy
 
----
+To evaluate regularization strength, run the model with different values of `lambda_reg` while keeping all other settings fixed.
 
-## Results
+### Results
 
-| Lambda | Accuracy | Sparsity |
-| ------ | -------- | -------- |
-| 0.01   | ~46%     | ~31%     |
+| Lambda | Test Accuracy (%) | Sparsity (%)  |
+| ------ | ----------------- | ------------  |
+| 0.0001 | 61.1              | 41.1          |
+| 0.001  | 55                | 43            |
+| 0.01   | 54.6              | 45.16         |
 
-> Note: Results may vary slightly depending on random seed and runtime.
+> Replace `XX.X` with values from `experiments/run_*.txt` after running the experiments.
 
----
+### Observations
 
-## Observations
+- As lambda increases, sparsity increases (more effective pruning).
+- Lower lambda preserves more connections and generally yields higher accuracy.
+- Higher lambda enforces stronger regularization, improving compression but potentially reducing performance.
+- This shows a clear trade-off between model accuracy and model sparsity.
 
-* Accuracy steadily improves during training
-* Sparsity also increases over time, showing progressive pruning
-* Increasing λ leads to higher sparsity but can reduce accuracy
+### Conclusion
 
-This demonstrates the trade-off between model efficiency and performance.
+- `lambda_reg = 0.0001`: higher accuracy, lower sparsity
+- `lambda_reg = 0.001`: balanced trade-off
+- `lambda_reg = 0.01`: higher sparsity, lower accuracy
 
----
+Choose lambda based on objective:
 
-## Why L1 Encourages Sparsity
+- Maximum performance: lower lambda
+- More compression/efficiency: higher lambda
 
-The sparsity loss is based on the sum of gate values, which acts similar to L1 regularization.
-L1-type penalties push parameters toward zero because smaller values reduce the loss.
+## Running Experiments
 
-Since gate values are passed through a sigmoid, pushing them toward zero reduces the contribution of corresponding weights, effectively pruning them.
-
----
-
-## Gate Distribution Insight
-
-The histogram of gate values (`out/gate_hist.png`) shows how weights are distributed after training.
-
-* Values near 0 → pruned or inactive connections
-* Values away from 0 → important retained weights
-
-A noticeable concentration near zero indicates successful pruning.
-
----
-
-## Output Files
-
-* `out/model.pth` - trained model checkpoint
-* `out/model.tar` - backup archive
-* `out/gate_hist.png` - histogram of gate values
-
----
-
-## How to Run
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
-python main.py
 ```
 
-The CIFAR-10 dataset downloads automatically on first run.
+Run one experiment manually:
 
----
+```bash
+python train.py --lambda_reg 0.0001
+python train.py --lambda_reg 0.001
+python train.py --lambda_reg 0.01
+```
 
-## Simple Explanation
+Or run all three with the helper script:
 
-The gate penalty pushes many gate values toward zero.
-Since weights are multiplied by `sigmoid(gate_score)`, smaller gates reduce the impact of those weights.
+```bash
+python run_experiments.py
+```
 
-As λ increases, the model focuses more on sparsity, which leads to more pruning.
-However, if λ becomes too large, useful weights may also be removed, reducing accuracy.
+Each run outputs:
 
----
+- Final test accuracy
+- Sparsity percentage
+- Per-run artifacts under `out/lambda_<lambda>/`
+- Run summary file under `experiments/run_<lambda>.txt`
 
-## Notes
+## Experiment Logs
 
-* Implementation is intentionally simple and easy to follow
-* No external pruning libraries are used
-* Focus is on learning pruning during training itself
+After running the lambda sweep, logs are saved in:
+
+```text
+experiments/
+	run_0.0001.txt
+	run_0.001.txt
+	run_0.01.txt
+```
+
+## Key Insight
+
+Learnable gating with sparsity regularization enables automatic pruning during training, making the network adaptive and more efficient without a separate pruning stage.
 
