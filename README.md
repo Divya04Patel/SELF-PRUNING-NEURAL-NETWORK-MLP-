@@ -102,6 +102,31 @@ experiments/
 	run_0.001.txt
 	run_0.01.txt
 ```
+## 📊 Gate Value Distribution
+
+The histogram below shows the distribution of learned gate values (after applying sigmoid) at the end of training.
+
+![Gate Distribution](out/gate_hist.png)
+
+### 🔍 Insight
+
+* Most gate values are concentrated near **0**, indicating that many connections are effectively turned off.
+* Only a small fraction of gates have higher values, representing important connections.
+* This demonstrates that the model **automatically learns sparsity** without explicit pruning steps.
+
+### 🧠 Interpretation
+
+The gating mechanism enables the network to:
+
+* Retain important weights
+* Suppress less useful connections
+* Achieve model compression during training
+
+This behavior aligns with the objective of a **self-pruning neural network**.
+
+<img width="1050" height="600" alt="image" src="https://github.com/user-attachments/assets/74cf5290-c6e8-4a5c-b3e4-17a380be2b8f" />
+
+---
 
 ## Key Insight
 
