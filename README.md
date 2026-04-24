@@ -39,11 +39,9 @@ To evaluate regularization strength, run the model with different values of `lam
 
 | Lambda | Test Accuracy (%) | Sparsity (%)  |
 | ------ | ----------------- | ------------  |
-| 0.0001 | 52.12             | 31.1          |
-| 0.001  | 46.63             | 33            |
-| 0.01   | 45.94             | 35.16         |
-
-> Replace `XX.X` with values from `experiments/run_*.txt` after running the experiments.
+| 0.0001 | 46.35             | 34.34         |
+| 0.001  | 40.28             | 53.60         |
+| 0.01   | 32.06             | 52.28         |
 
 ### Observations
 
