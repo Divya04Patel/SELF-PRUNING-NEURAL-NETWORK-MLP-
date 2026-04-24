@@ -124,8 +124,6 @@ The gating mechanism enables the network to:
 
 This behavior aligns with the objective of a **self-pruning neural network**.
 
-<img width="1050" height="600" alt="image" src="https://github.com/user-attachments/assets/74cf5290-c6e8-4a5c-b3e4-17a380be2b8f" />
-
 ---
 
 ## Key Insight
